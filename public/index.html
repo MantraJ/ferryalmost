@@ -1,0 +1,1502 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#090E14" id="themeColor">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ferry">
+<title>Ferry</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Crect%20width='100'%20height='100'%20rx='20'%20fill='%23090E14'/%3E%3Cg%20transform='translate(12.80%204.00)%20scale(0.2514)'%3E%3Cpath%20d='M148%208%20L236%20111%20L187%20111%20L187%20200%20L109%20200%20L109%20111%20L60%20111%20Z'%20fill='%235B9DFE'%20stroke='%235B9DFE'%20stroke-width='10'%20stroke-linejoin='round'/%3E%3Cpath%20d='M8%20226%20L288%20226%20L248%20308%20L48%20308%20Z'%20fill='%23EEF1F8'%20stroke='%23EEF1F8'%20stroke-width='10'%20stroke-linejoin='round'/%3E%3Cpath%20d='M20%20347%20C23.3%20345.6%2033.3%20340.1%2040%20338.5%20C46.7%20336.9%2053.3%20336.5%2060%20337.5%20C66.7%20338.5%2073.3%20341.7%2080%20344.5%20C86.7%20347.3%2093.3%20352.3%20100%20354.5%20C106.7%20356.7%20113.3%20358.0%20120%20357.5%20C126.7%20357.0%20133.3%20354.2%20140%20351.5%20C146.7%20348.8%20153.3%20343.4%20160%20341%20C166.7%20338.6%20173.3%20336.9%20180%20337%20C186.7%20337.1%20193.3%20339.0%20200%20341.5%20C206.7%20344.0%20213.3%20349.3%20220%20352%20C226.7%20354.7%20233.3%20357.2%20240%20357.5%20C246.7%20357.8%20254.2%20355.7%20260%20354%20C265.8%20352.3%20272.5%20348.6%20275%20347.5'%20fill='none'%20stroke='%23EEF1F8'%20stroke-width='14'%20stroke-linecap='round'%20stroke-linejoin='round'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg?v=4">
+<link rel="icon" href="/favicon.ico?v=4" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=4">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png?v=4">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png?v=4">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap">
+<script>
+/* Apply saved theme and accent before first paint so there is no flash. */
+(function () {
+  try {
+    var s = JSON.parse(localStorage.getItem('ferry.settings') || '{}');
+    var r = document.documentElement;
+    if (s.theme === 'light' || s.theme === 'dark') r.setAttribute('data-theme', s.theme);
+    else if (s.theme !== 'system') r.setAttribute('data-theme', 'dark');
+    if (s.accent) r.style.setProperty('--accent', s.accent);
+  } catch (e) { document.documentElement.setAttribute('data-theme', 'dark'); }
+})();
+</script>
+<style>
+/* Layout: one centred column. Radar of nearby devices on top, activity list below.
+   Change colours here, or from the Settings sheet inside the app. */
+:root {
+  --bg: #090E14;
+  --surface: #0F161F;
+  --surface-2: #162030;
+  --line: #1D2938;
+  --ink: #EEF1F8;
+  --ink-2: #8996AB;
+  --accent: #5B9DFE;
+  --accent-ink: #06101F;
+  --accent-soft: color-mix(in srgb, var(--accent) 16%, var(--surface));
+  --ok: #3DDC97;
+  --bad: #FF8A5B;
+  --shadow: 0 18px 50px -20px rgba(0, 0, 0, .7);
+  --font-ui: 'Instrument Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+:root[data-theme="light"] {
+  --bg: #F4F6FA; --surface: #FFFFFF; --surface-2: #EBEFF5; --line: #DEE4ED; --ink: #0A1522; --ink-2: #5A677B;
+  --ok: #0F9D63; --bad: #C2410C; --shadow: 0 18px 50px -24px rgba(10, 21, 34, .3);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    --bg: #F4F6FA; --surface: #FFFFFF; --surface-2: #EBEFF5; --line: #DEE4ED; --ink: #0A1522; --ink-2: #5A677B;
+    --ok: #0F9D63; --bad: #C2410C; --shadow: 0 18px 50px -24px rgba(10, 21, 34, .3);
+    color-scheme: light;
+  }
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; }
+body {
+  background: var(--bg); color: var(--ink);
+  font: 400 15px/1.5 var(--font-ui);
+  -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent;
+  min-height: 100vh; min-height: 100dvh;
+}
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.wrap {
+  max-width: 560px; margin: 0 auto; display: grid; gap: 8px; overflow-x: clip;
+  padding-block: max(16px, env(safe-area-inset-top, 0px)) max(40px, env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+/* Top bar */
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 0; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 19px; letter-spacing: -.01em; }
+.mark { width: 28px; height: 34px; display: block; flex: none; }
+.iconbtn {
+  width: 42px; height: 42px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface);
+  display: grid; place-items: center; transition: transform .15s ease, border-color .2s ease;
+}
+.iconbtn:hover { border-color: var(--accent); }
+.iconbtn:active { transform: scale(.94); }
+.iconbtn svg { width: 20px; height: 20px; }
+
+/* Radar */
+.stage { display: grid; justify-items: center; gap: 6px; padding-top: 8px; }
+.radar { position: relative; width: min(100%, 420px); aspect-ratio: 1; }
+.ring { position: absolute; left: 50%; top: 50%; border-radius: 50%; border: 1px solid var(--line); transform: translate(-50%, -50%); opacity: .8; }
+.r1 { width: 36%; height: 36%; } .r2 { width: 68%; height: 68%; } .r3 { width: 100%; height: 100%; opacity: .55; }
+.ripple {
+  position: absolute; left: 50%; top: 50%; width: 100%; height: 100%; border-radius: 50%;
+  border: 1px solid var(--accent); opacity: 0; transform: translate(-50%, -50%) scale(.2);
+  animation: ripple 4.8s cubic-bezier(.2, .6, .3, 1) infinite; pointer-events: none;
+}
+.ripple:nth-of-type(2) { animation-delay: 1.6s; }
+.ripple:nth-of-type(3) { animation-delay: 3.2s; }
+@keyframes ripple { 0% { opacity: .32; transform: translate(-50%, -50%) scale(.2); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(1); } }
+
+.me { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: grid; justify-items: center; gap: 6px; }
+.av {
+  width: 58px; height: 58px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--accent-soft); color: var(--accent); border: 1px solid var(--line);
+}
+.av svg { width: 26px; height: 26px; }
+.me .av { width: 64px; height: 64px; background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+.me .av svg { width: 28px; height: 28px; }
+
+.peer {
+  position: absolute; width: 80px; display: grid; justify-items: center; gap: 4px; padding: 0; border: 0; background: none;
+  transform: translate(-50%, -50%);
+  transition: left .55s cubic-bezier(.2, .8, .2, 1), top .55s cubic-bezier(.2, .8, .2, 1), opacity .35s ease, transform .35s cubic-bezier(.2, .8, .2, 1);
+}
+.peer.enter { opacity: 0; transform: translate(-50%, -50%) scale(.55); }
+.peer:hover .av, .peer.over .av { border-color: var(--accent); transform: scale(1.06); }
+.peer:active .av { transform: scale(.95); }
+.peer .av { transition: transform .2s cubic-bezier(.2, .8, .2, 1), border-color .2s ease; }
+.ringp { padding: 3px; border-radius: 50%; background: transparent; transition: background .2s ease; }
+.peer.busy .ringp { background: conic-gradient(var(--accent) calc(var(--p, 0) * 1%), var(--line) 0); }
+.pname { max-width: 80px; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ptype { font-size: 11px; color: var(--ink-2); margin-top: -3px; }
+.me .pname { font-size: 13px; }
+
+.status { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; font-size: 14px; color: var(--ink-2); text-align: center; }
+.status button { border: 0; background: none; padding: 0; color: var(--ink); font-weight: 600; text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ink-2); flex: none; }
+.dot.ok { background: var(--ok); } .dot.bad { background: var(--bad); }
+.empty { max-width: 340px; margin: 4px auto 0; text-align: center; color: var(--ink-2); font-size: 14px; display: grid; gap: 4px; }
+.empty b { color: var(--ink); font-weight: 600; }
+.linkbtn { border: 0; background: none; padding: 0; color: var(--accent); font-weight: 600; }
+
+/* Activity */
+.activity { display: grid; gap: 10px; margin-top: 12px; }
+.acthead { display: flex; align-items: center; justify-content: space-between; }
+.label { margin: 0; font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); }
+.list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.item {
+  display: grid; grid-template-columns: 46px minmax(0, 1fr) auto; gap: 12px; align-items: center;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 12px;
+  animation: rise .35s cubic-bezier(.2, .8, .2, 1) both;
+}
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.tile {
+  width: 46px; height: 46px; border-radius: 13px; display: grid; place-items: center; overflow: hidden;
+  background: var(--accent-soft); color: var(--accent); font: 600 11px var(--font-mono); letter-spacing: .04em;
+}
+.item.in .tile { background: color-mix(in srgb, var(--ok) 16%, var(--surface)); color: var(--ok); }
+.tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.meta { min-width: 0; }
+.name { margin: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sub { margin: 1px 0 0; font-size: 13px; color: var(--ink-2); font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sub.err { color: var(--bad); }
+.bar { height: 4px; border-radius: 4px; background: var(--surface-2); margin-top: 8px; overflow: hidden; transition: height .3s ease, margin .3s ease, opacity .3s ease; }
+.bar i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 4px; transition: width .25s linear; }
+.item.in .bar i { background: var(--ok); }
+.bar.done { height: 0; margin-top: 0; opacity: 0; }
+.act { display: flex; gap: 8px; }
+@media (max-width: 480px) { .item { grid-template-columns: 42px minmax(0, 1fr); } .tile { width: 42px; height: 42px; } .act { grid-column: 1 / -1; } }
+
+/* Buttons */
+.btn {
+  border: 0; border-radius: 16px; height: 50px; padding: 0 22px; font-weight: 600; font-size: 16px;
+  background: var(--accent); color: var(--accent-ink); transition: transform .15s ease, filter .2s ease;
+}
+.btn:hover { filter: brightness(1.07); } .btn:active { transform: scale(.98); }
+.btn.ghost { background: var(--surface-2); color: var(--ink); }
+.btn.sm { height: 34px; padding: 0 14px; font-size: 13px; border-radius: 10px; }
+.btn.soft { background: var(--accent-soft); color: var(--accent); }
+
+/* Send sheet */
+.sendhead { display: flex; align-items: center; gap: 14px; }
+.sendhead .av { width: 56px; height: 56px; flex: none; } .sendhead .av svg { width: 26px; height: 26px; }
+.sendhead .sub { white-space: normal; }
+.choices { display: grid; gap: 10px; }
+.choice {
+  display: grid; grid-template-columns: 44px minmax(0, 1fr); column-gap: 14px; align-items: center; text-align: left;
+  border: 1.5px solid var(--line); background: var(--surface-2); color: var(--ink); border-radius: 18px; padding: 12px 14px;
+  transition: border-color .2s ease, transform .15s ease;
+}
+.choice:hover { border-color: var(--accent); } .choice:active { transform: scale(.985); }
+.choice .ci { grid-row: span 2; width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); }
+.choice .ci svg { width: 22px; height: 22px; }
+.choice b { font-size: 16px; } .choice span.d { color: var(--ink-2); font-size: 13px; }
+.textbox { display: grid; gap: 12px; }
+.textbox textarea {
+  width: 100%; min-height: 110px; max-height: 40dvh; resize: vertical; border-radius: 14px; border: 1.5px solid var(--line);
+  background: var(--bg); padding: 12px 14px; line-height: 1.45; transition: border-color .2s ease;
+}
+.textbox textarea:focus { outline: none; border-color: var(--accent); }
+.item.txt .name { white-space: pre-wrap; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* Sheets */
+.back {
+  position: fixed; inset: 0; z-index: 30; background: rgba(4, 7, 12, .62); display: grid; align-items: end; justify-items: center;
+  animation: fade .25s ease both; backdrop-filter: blur(3px);
+}
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+.sheet {
+  width: min(100%, 480px); max-height: 92dvh; overflow: auto; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 28px 28px 0 0; padding: 24px 20px max(20px, env(safe-area-inset-bottom, 0px)); box-shadow: var(--shadow);
+  animation: up .34s cubic-bezier(.2, .8, .2, 1) both; display: grid; gap: 18px;
+}
+@keyframes up { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (min-width: 600px) { .back { align-items: center; } .sheet { border-radius: 28px; } }
+.sheet h2 { margin: 0; font-size: 22px; letter-spacing: -.01em; line-height: 1.25; }
+.sheet p { margin: 0; }
+.req { text-align: center; justify-items: center; }
+.req .av { width: 76px; height: 76px; } .req .av svg { width: 34px; height: 34px; }
+.req .sub { white-space: normal; }
+.files { list-style: none; margin: 0; padding: 0; width: 100%; display: grid; gap: 6px; text-align: left; }
+.files li { background: var(--surface-2); border-radius: 12px; padding: 8px 12px; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.files li.more { background: none; color: var(--ink-2); padding: 0 4px; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+
+.setrow { display: grid; gap: 10px; }
+.setrow .label { margin-bottom: -2px; }
+.textin {
+  height: 48px; border-radius: 14px; border: 1.5px solid var(--line); background: var(--bg); padding: 0 14px; width: 100%;
+  transition: border-color .2s ease;
+}
+.textin:focus { outline: none; border-color: var(--accent); }
+.seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px; background: var(--surface-2); border-radius: 14px; }
+.seg button { border: 0; background: none; height: 38px; border-radius: 10px; font-weight: 600; font-size: 14px; color: var(--ink-2); transition: background-color .2s ease, color .2s ease; }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(0, 0, 0, .25); }
+.swatches { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.sw { width: 36px; height: 36px; border-radius: 50%; border: 0; background: var(--c); position: relative; transition: transform .15s ease; }
+.sw:active { transform: scale(.9); }
+.sw[aria-pressed="true"]::after { content: ""; position: absolute; inset: -5px; border-radius: 50%; border: 2px solid var(--ink); }
+.picker { width: 36px; height: 36px; border-radius: 50%; border: 1.5px dashed var(--ink-2); padding: 0; background: none; overflow: hidden; position: relative; }
+.picker input { position: absolute; inset: -8px; width: 52px; height: 52px; border: 0; padding: 0; opacity: 0; cursor: pointer; }
+.picker span { position: absolute; inset: 0; display: grid; place-items: center; font-size: 20px; line-height: 1; color: var(--ink-2); pointer-events: none; }
+.switchrow { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.switchrow small { display: block; color: var(--ink-2); font-size: 13px; line-height: 1.35; margin-top: 2px; }
+.switch { appearance: none; -webkit-appearance: none; flex: none; width: 50px; height: 30px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); position: relative; transition: background-color .2s ease; margin: 0; cursor: pointer; }
+.switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: var(--ink-2); transition: transform .2s cubic-bezier(.2, .8, .2, 1), background-color .2s ease; }
+.switch:checked { background: var(--accent); border-color: transparent; }
+.switch:checked::after { transform: translateX(20px); background: var(--accent-ink); }
+.hint { font-size: 13px; color: var(--ink-2); }
+.tools { display: flex; gap: 8px; }
+a.btn { display: grid; place-items: center; text-decoration: none; }
+.seg.two { grid-template-columns: repeat(2, 1fr); }
+.stack { display: grid; gap: 10px; }
+.hd { display: grid; gap: 6px; }
+.fine { margin: 0; font-size: 13px; color: var(--ink-2); }
+.how { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; counter-reset: s; }
+.how li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 12px; align-items: start; counter-increment: s; }
+.how li::before {
+  content: counter(s); width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+  font: 600 12px var(--font-mono); background: var(--accent-soft); color: var(--accent);
+}
+.how li > span { padding-top: 3px; }
+.how b { font-weight: 600; }
+.glyph { display: inline-block; width: 1.15em; height: 1.15em; vertical-align: -0.22em; }
+
+.toast {
+  position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 16px);
+  background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-size: 14px; font-weight: 500;
+  opacity: 0; pointer-events: none; transition: opacity .25s ease, transform .25s ease; z-index: 40; max-width: calc(100vw - 32px); text-align: center;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+<svg class="mark" viewBox="0 0 296 366" width="28" height="34" aria-hidden="true"><path d="M148 8 L236 111 L187 111 L187 200 L109 200 L109 111 L60 111 Z" fill="#5B9DFE" stroke="#5B9DFE" stroke-width="10" stroke-linejoin="round"/><path d="M8 226 L288 226 L248 308 L48 308 Z" fill="#EEF1F8" stroke="#EEF1F8" stroke-width="10" stroke-linejoin="round"/><path d="M20 347 C23.3 345.6 33.3 340.1 40 338.5 C46.7 336.9 53.3 336.5 60 337.5 C66.7 338.5 73.3 341.7 80 344.5 C86.7 347.3 93.3 352.3 100 354.5 C106.7 356.7 113.3 358.0 120 357.5 C126.7 357.0 133.3 354.2 140 351.5 C146.7 348.8 153.3 343.4 160 341 C166.7 338.6 173.3 336.9 180 337 C186.7 337.1 193.3 339.0 200 341.5 C206.7 344.0 213.3 349.3 220 352 C226.7 354.7 233.3 357.2 240 357.5 C246.7 357.8 254.2 355.7 260 354 C265.8 352.3 272.5 348.6 275 347.5" fill="none" stroke="#EEF1F8" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Ferry
+    </div>
+    <div class="tools">
+    <button class="iconbtn" id="getApp" type="button" aria-label="Get the app">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0-4-4m4 4 4-4M5 20h14"/></svg>
+    </button>
+    <button class="iconbtn" id="openSettings" type="button" aria-label="Settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h9M19 7h1M4 17h1M11 17h9"/><circle cx="16" cy="7" r="2.4"/><circle cx="8" cy="17" r="2.4"/></svg>
+    </button>
+    </div>
+  </header>
+
+  <main class="stage">
+    <div class="radar" id="radar">
+      <div class="ring r3"></div><div class="ring r2"></div><div class="ring r1"></div>
+      <span class="ripple"></span><span class="ripple"></span><span class="ripple"></span>
+      <div class="me">
+        <div class="av" id="meAv"></div>
+        <span class="pname" id="meName"></span>
+      </div>
+    </div>
+    <div class="status"><span class="dot" id="netDot"></span><span id="netText">Connecting…</span></div>
+    <div class="empty" id="empty">
+      <span><b>Looking for devices nearby.</b></span>
+      <span>Open Ferry on another phone or computer that is on the same Wi-Fi. It shows up here on its own.</span>
+      <span><button class="linkbtn" id="notShowing" type="button">Not showing up?</button></span>
+    </div>
+  </main>
+
+  <section class="activity" id="activity" hidden aria-label="Activity">
+    <div class="acthead"><p class="label">Activity</p><button class="linkbtn" id="clearBtn" type="button">Clear</button></div>
+    <ul class="list" id="list"></ul>
+  </section>
+</div>
+
+<input class="sr" id="pick" type="file" multiple tabindex="-1" aria-hidden="true">
+<input class="sr" id="pickPhotos" type="file" multiple accept="image/*,video/*" tabindex="-1" aria-hidden="true">
+
+<div class="back" id="sendBack" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sendTitle">
+    <div class="sendhead"><div class="av" id="sendAv"></div><div><h2 id="sendTitle"></h2><p class="sub" id="sendSub"></p></div></div>
+    <div class="choices" id="sendChoices">
+      <button class="choice" id="chFiles" type="button"><span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg></span><b>Files</b><span class="d">Documents, videos, anything on this device</span></button>
+      <button class="choice" id="chPhotos" type="button"><span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="m21 16-5-5-8 9"/></svg></span><b>Photos and videos</b><span class="d">Pick from your gallery</span></button>
+      <button class="choice" id="chText" type="button"><span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h16"/></svg></span><b>Text or link</b><span class="d">Send a message or a web address</span></button>
+    </div>
+    <div class="textbox" id="sendTextBox" hidden>
+      <textarea id="sendText" maxlength="20000" placeholder="Type or paste text or a link" aria-label="Text or link to send"></textarea>
+      <button class="linkbtn" id="sendPaste" type="button" hidden style="justify-self: start">Paste from clipboard</button>
+      <div class="row2"><button class="btn ghost" id="sendTextBack" type="button">Back</button><button class="btn" id="sendTextGo" type="button">Send</button></div>
+    </div>
+    <button class="btn ghost" id="sendCancel" type="button">Cancel</button>
+  </div>
+</div>
+
+<div class="back" id="reqBack" hidden>
+  <div class="sheet req" role="dialog" aria-modal="true" aria-labelledby="reqTitle">
+    <div class="av" id="reqAv"></div>
+    <div><h2 id="reqTitle"></h2><p class="sub" id="reqSub"></p></div>
+    <ul class="files" id="reqFiles"></ul>
+    <div class="row2"><button class="btn ghost" id="reqNo" type="button">Decline</button><button class="btn" id="reqYes" type="button">Accept</button></div>
+  </div>
+</div>
+
+<div class="back" id="setBack" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="setTitle">
+    <h2 id="setTitle">Settings</h2>
+    <div class="setrow">
+      <label class="label" for="setName">This device is called</label>
+      <input class="textin" id="setName" maxlength="24" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="setrow">
+      <p class="label">Theme</p>
+      <div class="seg" id="themeSeg">
+        <button type="button" data-v="dark" aria-pressed="false">Dark</button>
+        <button type="button" data-v="light" aria-pressed="false">Light</button>
+        <button type="button" data-v="system" aria-pressed="false">System</button>
+      </div>
+    </div>
+    <div class="setrow">
+      <p class="label">Accent colour</p>
+      <div class="swatches" id="swatches"></div>
+    </div>
+    <div class="switchrow">
+      <div><label for="setAuto"><b>Accept files automatically</b></label><small>Skip the prompt for files sent by nearby devices. Leave off in public places.</small></div>
+      <input class="switch" id="setAuto" type="checkbox">
+    </div>
+    <div class="setrow">
+      <label class="label" for="setRoom">Shared room (optional)</label>
+      <input class="textin" id="setRoom" maxlength="32" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Leave empty to use your Wi-Fi">
+      <p class="hint">Only devices with the same room name see each other. Use this if you see devices that are not yours, or yours do not find each other.</p>
+      <button class="btn ghost" id="mkRoom" type="button">Create private room &amp; share link</button>
+    </div>
+    <button class="btn ghost" id="shareApp" type="button">Share Ferry with a friend</button>
+    <button class="btn" id="setDone" type="button">Done</button>
+  </div>
+</div>
+
+<div class="back" id="instBack" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="instTitle">
+    <h2 id="instTitle">Get the Ferry app</h2>
+    <div class="seg two" id="instSeg">
+      <button type="button" data-v="android" aria-pressed="false">Android</button>
+      <button type="button" data-v="iphone" aria-pressed="false">iPhone</button>
+    </div>
+    <div class="stack" id="instAndroid">
+      <button class="btn" id="instBtn" type="button" hidden>Install Ferry</button>
+      <a class="btn" id="apkBtn" href="/ferry.apk" download="Ferry.apk" hidden>Download APK</a>
+      <ol class="how" id="instManual">
+        <li><span>Open the Chrome menu <b>&#8942;</b> at the top right.</span></li>
+        <li><span>Tap <b>Install app</b> or <b>Add to Home screen</b>.</span></li>
+      </ol>
+      <p class="fine">Once installed, Ferry opens from your home screen like any other app.</p>
+    </div>
+    <div class="stack" id="instIphone" hidden>
+      <ol class="how">
+        <li><span>Open this page in <b>Safari</b>. Other browsers cannot add apps to the Home Screen.</span></li>
+        <li><span>Tap the <b>Share</b> button <svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M8 7l4-4 4 4M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg> at the bottom of the screen.</span></li>
+        <li><span>Scroll down and tap <b>Add to Home Screen</b>.</span></li>
+        <li><span>Tap <b>Add</b>. Ferry now sits on your Home Screen.</span></li>
+      </ol>
+      <p class="fine">Apple only lets apps install from the App Store, so Add to Home Screen is how Ferry gets onto an iPhone.</p>
+    </div>
+    <div class="stack">
+      <button class="btn ghost" id="instShare" type="button">Send this link to someone</button>
+      <button class="btn ghost" id="instClose" type="button">Continue in browser</button>
+    </div>
+  </div>
+</div>
+
+<div class="back" id="nameBack" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="nameTitle">
+    <div class="hd">
+      <h2 id="nameTitle">What should we call this device?</h2>
+      <p class="hint">Nearby devices see this name when you send them files.</p>
+    </div>
+    <input class="textin" id="nameInput" maxlength="24" autocomplete="off" spellcheck="false" aria-label="Device name" placeholder="For example Mantra">
+    <p class="fine">Ferry keeps a list of devices that use the service. The owner can see this name, your IP address and basic details about your device: phone model, browser, screen size, language and time zone. Your files are never part of that list.</p>
+    <button class="btn" id="nameGo" type="button">Continue</button>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(() => {
+  'use strict';
+
+  /* ---- Settings you may want to change ---- */
+  const CONFIG = {
+    chunk: 64 * 1024,                 // bytes per message (lowered automatically if the other browser allows less)
+    highWater: 8 * 1024 * 1024,         // pause sending when this much is queued
+    lowWater: 2 * 1024 * 1024,          // resume sending when the queue drops below this
+    bigFile: 32 * 1024 * 1024,        // files this big or bigger are written to disk while receiving instead of held in memory
+    connectTimeout: 20000,            // ms to wait for the other device
+    stallTimeout: 45000,              // ms without any data before a transfer is called failed
+    // STUN only by default. For transfers between different networks, set ICE_SERVERS on the server (see README) to add TURN.
+    iceServers: [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302', 'stun:stun.cloudflare.com:3478'] }],
+    accents: ['#5B9DFE', '#A78BFA', '#3DDC97', '#FFB020', '#FF6B6B', '#FF7AC6']
+  };
+  const ADJ = ['Quiet', 'Swift', 'Bright', 'Calm', 'Bold', 'Lucky', 'Gentle', 'Rapid', 'Sunny', 'Misty', 'Clever', 'Brave'];
+  const ANI = ['Falcon', 'Otter', 'Lynx', 'Heron', 'Panda', 'Fox', 'Orca', 'Gecko', 'Moose', 'Raven', 'Koala', 'Tiger'];
+
+  const $ = (s) => document.querySelector(s);
+  const pick = (a) => a[crypto.getRandomValues(new Uint32Array(1))[0] % a.length];
+  const rid = (n = 8) => Array.from(crypto.getRandomValues(new Uint8Array(n)), (b) => b.toString(16).padStart(2, '0')).join('');
+
+  /* ---- settings storage ---- */
+  const DEFAULTS = { theme: 'dark', accent: CONFIG.accents[0], name: '', auto: false, room: '', named: false, ack: 0, did: '', since: 0 };
+  let settings = Object.assign({}, DEFAULTS);
+  try { Object.assign(settings, JSON.parse(localStorage.getItem('ferry.settings') || '{}')); } catch (e) {}
+  if (String(settings.accent).toLowerCase() === '#6c8bff') settings.accent = CONFIG.accents[0];   // the old default blue becomes the logo blue
+  if (!settings.name) settings.name = pick(ADJ) + ' ' + pick(ANI);
+  if (!/^[a-f0-9]{16,32}$/.test(settings.did || '')) settings.did = rid(12);   // identifies this device in the names list
+  if (!settings.since) settings.since = Date.now();
+  // A link like https://ferrytransfer.online/?room=abc123 puts this device in that private room.
+  try {
+    const rm = new URLSearchParams(location.search).get('room');
+    if (rm && rm.trim()) { settings.room = rm.trim().slice(0, 32); history.replaceState(null, '', location.pathname); }
+  } catch (e) {}
+  // One id per page load. If the page reconnects, the server swaps the old connection for the new one instead of listing a second device.
+  const tid = rid(6);
+  function save() { try { localStorage.setItem('ferry.settings', JSON.stringify(settings)); } catch (e) {} }
+  save();
+
+  /* ---- device type and icons ---- */
+  function detect() {
+    const ua = navigator.userAgent;
+    if (/iPhone|iPod/.test(ua)) return 'iphone';
+    if (/iPad/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) return 'ipad';
+    if (/Android/.test(ua)) return /Mobile/.test(ua) ? 'android' : 'tablet';
+    return 'computer';
+  }
+  const LABEL = { iphone: 'iPhone', ipad: 'iPad', android: 'Android', tablet: 'Android tablet', computer: 'Computer' };
+  const SV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">';
+  const ICON = {
+    phone: SV + '<rect x="7" y="2.5" width="10" height="19" rx="2.6"/><path d="M11 18.5h2"/></svg>',
+    tablet: SV + '<rect x="4" y="3" width="16" height="18" rx="2.6"/><path d="M11 18h2"/></svg>',
+    computer: SV + '<rect x="4.5" y="5" width="15" height="10.5" rx="1.8"/><path d="M2.5 19h19"/></svg>'
+  };
+  const iconFor = (t) => (t === 'iphone' || t === 'android' ? ICON.phone : t === 'ipad' || t === 'tablet' ? ICON.tablet : ICON.computer);
+
+  /* ---- theme and accent ---- */
+  function inkFor(hex) {
+    const n = parseInt(hex.slice(1), 16);
+    const L = (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
+    return L > 0.6 ? '#0B0F17' : '#FFFFFF';
+  }
+  function applyTheme() {
+    const r = document.documentElement;
+    if (settings.theme === 'system') r.removeAttribute('data-theme'); else r.setAttribute('data-theme', settings.theme);
+    const dark = settings.theme === 'dark' || (settings.theme === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
+    const acc = !dark && settings.accent.toLowerCase() === CONFIG.accents[0].toLowerCase() ? '#2878F0' : settings.accent;
+    r.style.setProperty('--accent', acc);
+    r.style.setProperty('--accent-ink', inkFor(acc));
+    $('#themeColor').setAttribute('content', dark ? '#090E14' : '#F4F6FA');
+  }
+  applyTheme();
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
+
+  /* ---- small UI helpers ---- */
+  let toastTimer = 0;
+  function toast(text) {
+    const t = $('#toast');
+    t.textContent = text; t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+  }
+  function fmtBytes(n) {
+    if (n < 1024) return n + ' B';
+    const u = ['KB', 'MB', 'GB', 'TB']; let i = -1;
+    do { n /= 1024; i++; } while (n >= 1024 && i < u.length - 1);
+    return (n >= 100 ? n.toFixed(0) : n >= 10 ? n.toFixed(1) : n.toFixed(2)) + ' ' + u[i];
+  }
+  function setStatus(state) {
+    const dot = $('#netDot'), text = $('#netText');
+    dot.className = 'dot ' + (state === 'online' ? 'ok' : state === 'offline' ? 'bad' : '');
+    text.textContent = state === 'online' ? (settings.room ? 'Visible in private room “' + settings.room + '”' : 'Visible to nearby devices') : state === 'offline' ? 'Offline. Trying to reconnect…' : 'Connecting…';
+  }
+
+  /* ---- me ---- */
+  const me = { id: null, d: '', type: detect() };
+  function paintMe() {
+    $('#meAv').innerHTML = iconFor(me.type);
+    $('#meName').textContent = settings.name;
+  }
+  paintMe();
+
+  /* ---- connection to the server ---- */
+  const peers = new Map();
+  let es = null;
+  function connectSse() {
+    if (es) es.close();
+    clearTimeout(retryTimer);
+    me.id = null; lastMsg = Date.now();   // the old id is dead as soon as we reconnect
+    setStatus('connecting');
+    const q = new URLSearchParams({ name: settings.name, type: me.type, room: settings.room, did: settings.did, tid, since: String(settings.since) });
+    if (settings.ack === 2) {   // only after the person has seen the notice about what is shared
+      q.set('ack', '2');
+      q.set('scr', screen.width + 'x' + screen.height + '@' + (Math.round((devicePixelRatio || 1) * 10) / 10));
+      q.set('lang', navigator.language || '');
+      try { q.set('tz', Intl.DateTimeFormat().resolvedOptions().timeZone || ''); } catch (e) {}
+      q.set('mode', isStandalone() ? 'app' : 'browser');
+      if (hi.model) q.set('model', hi.model);
+    }
+    es = new EventSource('/events?' + q);
+    const on = (name, fn) => es.addEventListener(name, (e) => { lastMsg = Date.now(); fn(e); });
+    on('hello', (e) => { const h = JSON.parse(e.data); me.id = h.id; me.d = h.d || ''; peers.clear(); renderPeers(); setStatus('online'); beat(); });
+    on('ping', (e) => {   // every ping lists who is really here, so a missed "left" message cannot leave a ghost behind
+      try {
+        const d = JSON.parse(e.data);
+        if (!d || !Array.isArray(d.p)) return;
+        const ids = new Set(d.p.map((x) => x.id));
+        let changed = false;
+        for (const id of [...peers.keys()]) if (!ids.has(id)) { peers.delete(id); changed = true; }
+        d.p.forEach((x) => { const o = peers.get(x.id); if (!o || o.name !== x.name || o.d !== x.d) changed = true; peers.set(x.id, x); });
+        if (changed) renderPeers();
+      } catch (err) {}
+    });
+    on('peers', (e) => { JSON.parse(e.data).forEach((p) => peers.set(p.id, p)); renderPeers(); });
+    on('peer-joined', (e) => { const p = JSON.parse(e.data); peers.set(p.id, p); renderPeers(); });
+    on('peer-updated', (e) => { const p = JSON.parse(e.data); peers.set(p.id, p); renderPeers(); });
+    on('peer-left', (e) => { peers.delete(JSON.parse(e.data).id); renderPeers(); });
+    on('signal', (e) => onSignal(JSON.parse(e.data)));
+    // Reconnect ourselves instead of trusting the browser's retry, which would reuse the old name.
+    const mine = es;
+    es.onerror = () => {
+      if (es !== mine) return;
+      setStatus('offline');
+      mine.close();
+      clearTimeout(retryTimer);
+      retryTimer = setTimeout(connectEvents, 2000);
+    };
+    // Free hosts put idle servers to sleep. Tell the person why the first open is slow.
+    clearTimeout(wakeTimer);
+    wakeTimer = setTimeout(() => {
+      if (!me.id) $('#netText').textContent = 'Waking up the connection. The first open can take up to a minute…';
+    }, 6000);
+  }
+  let wakeTimer = 0, retryTimer = 0, lastMsg = 0;
+
+  /* ---- two ways to meet nearby devices ---- */
+  // On Vercel there is no always-on server, so the page asks /api/room for a private meeting point and uses a
+  // message broker ("mqtt") only to introduce the phones. With a Ferry server behind the page it uses "sse" as before.
+  let mode = null, mq = null, base = '', mqTimers = [], brokerIx = 0, mqSeq = 0, registered = '', iceLoaded = false;
+  function loadIce() {   // which STUN/TURN helpers to use (the server may have a relay set up)
+    if (iceLoaded) return; iceLoaded = true;
+    fetch(mode === 'sse' ? '/ice' : '/api/ice', { cache: 'no-store' }).then((r) => r.json())
+      .then((j) => { if (j && Array.isArray(j.iceServers) && j.iceServers.length) CONFIG.iceServers = j.iceServers; }).catch(() => { iceLoaded = false; });
+  }
+  function stopAll() {
+    if (es) { es.close(); es = null; }
+    if (mq) { mq.dead = true; mq.close(); mq = null; }
+    mqTimers.forEach(clearInterval); mqTimers = [];
+    clearTimeout(retryTimer);
+  }
+  async function connectEvents() {
+    stopAll();
+    me.id = null; lastMsg = Date.now();
+    setStatus('connecting');
+    if (mode === 'sse') { loadIce(); return connectSse(); }
+    let info = null;   // a network failure means retry; a missing /api page means this is a Ferry server
+    try {
+      const r = await fetch('/api/room?room=' + encodeURIComponent(settings.room || ''), { cache: 'no-store' });
+      if (r.ok && (r.headers.get('content-type') || '').includes('json')) info = await r.json();
+      else if (r.status < 500) { mode = 'sse'; loadIce(); return connectSse(); }
+    } catch (e) {}
+    if (!info || !info.room) { setStatus('offline'); retryTimer = setTimeout(connectEvents, 2000); return; }
+    mode = 'mqtt'; loadIce();
+    connectMqtt(info);
+  }
+
+  /* -- message broker (MQTT over WebSocket) -- */
+  // A tiny MQTT 3.1.1 client: connect, subscribe, publish, keep alive, and a "last will" that erases our
+  // presence the moment the connection dies, so nobody is left behind as a ghost.
+  const TE = new TextEncoder(), TD = new TextDecoder();
+  const mstr = (s) => { const b = TE.encode(s); return [b.length >> 8, b.length & 255, ...b]; };
+  const mlen = (n) => { const o = []; do { let d = n % 128; n = Math.floor(n / 128); if (n > 0) d |= 128; o.push(d); } while (n > 0); return o; };
+  const mpkt = (type, body) => { const l = mlen(body.length), out = new Uint8Array(1 + l.length + body.length); out.set([type, ...l]); out.set(body, 1 + l.length); return out; };
+  function MQ(url, clientId, willTopic, h) {
+    const self = { dead: false, ready: false, buf: new Uint8Array(0), pid: 1 };
+    const ws = new WebSocket(url, 'mqtt');
+    ws.binaryType = 'arraybuffer';
+    const fail = setTimeout(() => { if (!self.ready) { try { ws.close(); } catch (e) {} } }, 8000);
+    const put = (u8) => { if (ws.readyState === 1) { ws.send(u8); return true; } return false; };
+    self.publish = (topic, text, retain) => put(mpkt(0x30 | (retain ? 1 : 0), new Uint8Array([...mstr(topic), ...TE.encode(text)])));
+    self.subscribe = (filter) => put(mpkt(0x82, new Uint8Array([self.pid >> 8, self.pid++ & 255, ...mstr(filter), 0])));
+    self.close = () => { clearTimeout(fail); try { ws.close(); } catch (e) {} };
+    self.open = () => ws.readyState === 1 && self.ready;
+    ws.onopen = () => put(mpkt(0x10, new Uint8Array([...mstr('MQTT'), 4, 0x26, 0, 30, ...mstr(clientId), ...mstr(willTopic), 0, 0])));
+    ws.onclose = () => { clearTimeout(fail); self.ready = false; if (!self.dead) h.onclose(); };
+    ws.onerror = () => {};
+    ws.onmessage = (e) => {
+      const add = new Uint8Array(e.data), all = new Uint8Array(self.buf.length + add.length);
+      all.set(self.buf); all.set(add, self.buf.length); self.buf = all;
+      for (;;) {
+        const b = self.buf; let n = 0, mul = 1, i = 1, d;
+        do { if (i >= b.length || i > 4) return; d = b[i++]; n += (d & 127) * mul; mul *= 128; } while (d & 128);
+        if (b.length < i + n) return;
+        const body = b.slice(i, i + n), head = b[0]; self.buf = b.slice(i + n);
+        const t = head >> 4;
+        if (t === 2) { if (body[1] === 0) { self.ready = true; clearTimeout(fail); h.onready(); } else { self.close(); } }
+        else if (t === 3) {
+          const tl = (body[0] << 8) | body[1];
+          h.onmsg(TD.decode(body.slice(2, 2 + tl)), TD.decode(body.slice(2 + tl + ((head >> 1) & 3 ? 2 : 0))));
+        }
+      }
+    };
+    return self;
+  }
+  async function myHash() {   // same idea as the server's pubHash: lets the app tell two tabs of one device from two devices
+    if (!/^[a-f0-9]{16,32}$/.test(settings.did || '') || !crypto.subtle) return '';
+    const h = await crypto.subtle.digest('SHA-256', TE.encode('ferry:' + settings.did));
+    return Array.from(new Uint8Array(h), (b) => b.toString(16).padStart(2, '0')).join('').slice(0, 12);
+  }
+  async function connectMqtt(info) {
+    const newBase = 'ferry/v1/' + info.room;
+    if (newBase !== base) { peers.clear(); renderPeers(); }
+    base = newBase;
+    me.d = await myHash();
+    if (mode !== 'mqtt' || mq) return;     // another connect started while we were hashing
+    me.id = me.id || rid(12); me.j = me.j || Date.now();
+    const myId = me.id, presence = base + '/p/' + myId;
+    const url = info.brokers[brokerIx % info.brokers.length];
+    const m = MQ(url, 'f' + myId + (++mqSeq), presence, {
+      onready() {
+        m.subscribe(base + '/p/+'); m.subscribe(base + '/s/' + myId);
+        announce(); setStatus('online'); lastMsg = Date.now();
+        sendRegister();
+      },
+      onmsg(topic, text) {
+        lastMsg = Date.now();
+        if (topic.startsWith(base + '/p/')) {
+          const id = topic.slice((base + '/p/').length);
+          if (id === myId) return;
+          if (!text) { if (peers.delete(id)) renderPeers(); return; }
+          let p; try { p = JSON.parse(text); } catch (e) { return; }
+          if (!p || p.id !== id) return;
+          peers.set(id, { id, name: String(p.name || 'Device').replace(/[\u0000-\u001f<>]/g, '').slice(0, 24) || 'Device', type: p.type || 'computer', d: p.d || '', j: p.j || 0, seen: Date.now() });
+          renderPeers();
+        } else if (topic === base + '/s/' + myId) {
+          try { onSignal(JSON.parse(text)); } catch (e) {}
+        }
+      },
+      onclose() {
+        if (m.dead) return;
+        setStatus('offline');
+        brokerIx++;     // try the next broker
+        mq = null; clearTimeout(retryTimer); retryTimer = setTimeout(connectEvents, 1500);
+      }
+    });
+    mq = m;
+    mqTimers.push(setInterval(() => { if (m.open()) announce(); }, 15000));
+    mqTimers.push(setInterval(() => { if (m.open() && !document.hidden) sendRegister(); }, 20 * 60 * 1000));   // keeps "last seen" fresh
+    mqTimers.push(setInterval(() => {
+      let changed = false; const now = Date.now();
+      for (const [id, p] of peers) if (now - p.seen > 45000) { peers.delete(id); changed = true; }   // went quiet
+      if (changed) renderPeers();
+    }, 5000));
+  }
+  function announce() {
+    if (mq && mq.open()) mq.publish(base + '/p/' + me.id, JSON.stringify({ id: me.id, name: settings.name, type: me.type, d: me.d, j: me.j }), true);
+  }
+  // Records the device in the owner's list. The server only keeps IP and details after the person confirmed the notice.
+  function sendRegister() {
+    const q = new URLSearchParams({ name: settings.name, type: me.type, did: settings.did, since: String(settings.since) });
+    if (settings.ack === 2) {
+      q.set('ack', '2');
+      q.set('scr', screen.width + 'x' + screen.height + '@' + (Math.round((devicePixelRatio || 1) * 10) / 10));
+      q.set('lang', navigator.language || '');
+      try { q.set('tz', Intl.DateTimeFormat().resolvedOptions().timeZone || ''); } catch (e) {}
+      q.set('mode', isStandalone() ? 'app' : 'browser');
+      if (hi.model) q.set('model', hi.model);
+    }
+    q.set('login', registered ? '0' : '1');   // the first call after opening the app counts as a login
+    registered = settings.name;
+    fetch('/api/register', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(Object.fromEntries(q)), keepalive: true }).catch(() => {});
+  }
+  // Sends a setup message to another device. Resolves false when it could not be handed over.
+  async function sendSignal(to, data) {
+    if (mode === 'mqtt') return !!(mq && mq.open() && mq.publish(base + '/s/' + to, JSON.stringify({ from: me.id, data }), false));
+    try { const r = await fetch('/signal', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ from: me.id, to, data }) }); return r.ok; }
+    catch (e) { return false; }
+  }
+  // When the app comes back to the front, make sure the connection is alive and visible again.
+  function revive() {
+    if (document.hidden) return;
+    if (!mq || !mq.open()) connectEvents(); else announce();
+  }
+
+  // Keeping the list honest: tell the server we are alive, and notice quickly when it stops talking to us.
+  async function beat() {
+    if (!me.id || mode !== 'sse') return;
+    try {
+      const r = await fetch('/ping', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: me.id }), keepalive: true });
+      if (r.status === 404 && es) connectEvents();   // the server no longer knows this device (restart, or it was dropped)
+    } catch (e) {}
+  }
+  setInterval(beat, 12000);
+  setInterval(() => {
+    if (!es) return;
+    const quiet = Date.now() - lastMsg;
+    if ((me.id && quiet > 30000) || (!me.id && quiet > 20000)) connectEvents();   // a stream that goes silent is dead, even if the browser has not noticed
+  }, 5000);
+  function recheck() {
+    if (!settings.named || settings.ack !== 2) return;
+    if (mode === 'mqtt') return revive();
+    if (!es || es.readyState === 2 || Date.now() - lastMsg > 12000) connectEvents(); else beat();
+  }
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) { recheck(); if (sessions.size) keepAwake(true); } });
+  window.addEventListener('online', recheck);
+  window.addEventListener('pageshow', (e) => { if (e.persisted && settings.named && settings.ack === 2) connectEvents(); });
+  // Disappear from other screens right away when the page closes, instead of lingering as a ghost.
+  window.addEventListener('pagehide', () => { try { if (mq && mq.open()) { mq.publish(base + '/p/' + me.id, '', true); mq.dead = true; mq.close(); } else if (mode === 'sse' && me.id && navigator.sendBeacon) navigator.sendBeacon('/leave', JSON.stringify({ id: me.id })); } catch (e) {} });
+
+  /* ---- radar ---- */
+  const bubbles = new Map();
+  function layout(list) {
+    const n = list.length, inner = Math.min(n, 4), outer = n - inner;
+    return list.map((p, i) => {
+      let r, a;
+      if (i < inner) { r = 34; a = (-60 + (360 / inner) * i) * Math.PI / 180; }
+      else { r = 41; a = (-90 + 180 / outer + (360 / outer) * (i - inner)) * Math.PI / 180; }
+      return { p, x: 50 + r * Math.cos(a), y: 50 + r * Math.sin(a) };
+    });
+  }
+  function renderPeers() {
+    const radar = $('#radar');
+    // Hide our own other tabs, and show each device once (its newest connection).
+    const byDev = new Map();
+    for (const p of peers.values()) {
+      if (me.d && p.d === me.d) continue;
+      const k = p.d || p.id, o = byDev.get(k);
+      if (!o || (p.j || 0) >= (o.j || 0)) byDev.set(k, p);
+    }
+    const list = [...byDev.values()].sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
+    const shown = new Set(list.map((p) => p.id));
+    for (const [id, b] of bubbles) {
+      if (!shown.has(id)) { b.classList.add('enter'); setTimeout(() => b.remove(), 350); bubbles.delete(id); }
+    }
+    layout(list).forEach(({ p, x, y }) => {
+      let b = bubbles.get(p.id);
+      if (!b) {
+        b = document.createElement('button');
+        b.type = 'button'; b.className = 'peer enter';
+        b.innerHTML = '<span class="ringp"><span class="av"></span></span><span class="pname"></span><span class="ptype"></span>';
+        b.addEventListener('click', () => openSend(p.id));
+        b.addEventListener('dragenter', (e) => { e.preventDefault(); b.classList.add('over'); });
+        b.addEventListener('dragover', (e) => { e.preventDefault(); b.classList.add('over'); });
+        b.addEventListener('dragleave', () => b.classList.remove('over'));
+        b.addEventListener('drop', (e) => {
+          e.preventDefault(); b.classList.remove('over');
+          if (e.dataTransfer && e.dataTransfer.files.length) sendTo(p.id, Array.from(e.dataTransfer.files));
+        });
+        b.style.left = x + '%'; b.style.top = y + '%';
+        radar.appendChild(b);
+        bubbles.set(p.id, b);
+        requestAnimationFrame(() => requestAnimationFrame(() => b.classList.remove('enter')));
+      }
+      b.dataset.id = p.id;
+      b.querySelector('.av').innerHTML = iconFor(p.type);
+      b.querySelector('.pname').textContent = p.name;
+      b.querySelector('.ptype').textContent = LABEL[p.type] || 'Device';
+      b.setAttribute('aria-label', 'Send files to ' + p.name);
+      b.style.left = x + '%'; b.style.top = y + '%';
+    });
+    $('#empty').hidden = list.length > 0;
+  }
+  function updateRing(remoteId) {
+    const b = bubbles.get(remoteId); if (!b) return;
+    let done = 0, total = 0, busy = false;
+    for (const s of sessions.values()) {
+      if (s.remote !== remoteId) continue;
+      busy = true;
+      for (const t of items(s)) { done += t.done; total += t.size; }
+    }
+    b.classList.toggle('busy', busy);
+    b.style.setProperty('--p', total ? Math.round((done / total) * 100) : 0);
+  }
+
+  /* ---- picking files ---- */
+  let pickTarget = null;
+  function chooseFor(id) { pickTarget = id; $('#pick').click(); }
+  for (const id of ['#pick', '#pickPhotos']) $(id).addEventListener('change', (e) => {
+    const files = Array.from(e.target.files);
+    e.target.value = '';
+    if (pickTarget && files.length) sendTo(pickTarget, files);
+  });
+
+  /* ---- the send sheet: files, photos and videos, or text and links ---- */
+  const sendBack = $('#sendBack');
+  function openSend(id) {
+    const p = peers.get(id); if (!p) return;
+    pickTarget = id;
+    $('#sendAv').innerHTML = iconFor(p.type);
+    $('#sendTitle').textContent = 'Send to ' + p.name;
+    $('#sendSub').textContent = LABEL[p.type] || 'Device';
+    $('#sendChoices').hidden = false; $('#sendCancel').hidden = false; $('#sendTextBox').hidden = true;
+    $('#sendText').value = '';
+    sendBack.hidden = false;
+  }
+  function closeSend() { sendBack.hidden = true; }
+  $('#chFiles').addEventListener('click', () => { closeSend(); $('#pick').click(); });
+  $('#chPhotos').addEventListener('click', () => { closeSend(); $('#pickPhotos').click(); });
+  $('#chText').addEventListener('click', () => {
+    $('#sendChoices').hidden = true; $('#sendCancel').hidden = true; $('#sendTextBox').hidden = false;
+    $('#sendPaste').hidden = !(navigator.clipboard && navigator.clipboard.readText);
+    $('#sendText').focus();
+  });
+  $('#sendTextBack').addEventListener('click', () => { $('#sendTextBox').hidden = true; $('#sendChoices').hidden = false; $('#sendCancel').hidden = false; });
+  $('#sendPaste').addEventListener('click', async () => {
+    try { const t = await navigator.clipboard.readText(); if (t) { $('#sendText').value = t.slice(0, 20000); $('#sendText').focus(); } } catch (e) { toast('Your browser did not allow pasting. Paste into the box yourself.'); }
+  });
+  $('#sendTextGo').addEventListener('click', () => {
+    const text = $('#sendText').value.trim();
+    if (!text) { $('#sendText').focus(); return; }
+    const id = pickTarget;
+    if (!peers.get(id)) { closeSend(); toast('That device is no longer nearby'); return; }
+    closeSend();
+    sendTo(id, [new File([text], 'Message.txt', { type: 'text/plain' })], { text: true });
+  });
+  $('#sendCancel').addEventListener('click', closeSend);
+  sendBack.addEventListener('click', (e) => { if (e.target === sendBack) closeSend(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !sendBack.hidden) closeSend(); });
+  window.addEventListener('dragover', (e) => e.preventDefault());
+  window.addEventListener('drop', (e) => e.preventDefault());
+
+  /* ---- sessions: one WebRTC link per send ---- */
+  const sessions = new Map();
+  const items = (s) => (s.role === 'out' ? s.items : Array.from(s.items.values()));
+  let wake = null;
+  async function keepAwake(on) {
+    try {
+      if (on && !wake && navigator.wakeLock) { wake = await navigator.wakeLock.request('screen'); wake.addEventListener('release', () => { wake = null; }); }
+      else if (!on && wake) { await wake.release(); wake = null; }
+    } catch (e) {}
+  }
+  // Setup messages are posted one at a time so they arrive in order.
+  function sig(s, data) {
+    s.chain = (s.chain || Promise.resolve()).then(async () => {
+      const ok = await sendSignal(s.remote, Object.assign({ sid: s.sid }, data));
+      // The other device could not be reached. Give up quickly instead of waiting for the timeout.
+      if (!ok && !s.ended && (data.t === 'offer' || data.t === 'answer')) endSession(s, 'unreachable');
+    });
+  }
+  function newPC(s) {
+    const pc = new RTCPeerConnection({ iceServers: CONFIG.iceServers });
+    s.pc = pc;
+    pc.onicecandidate = (e) => { if (e.candidate) sig(s, { t: 'ice', c: e.candidate }); };
+    pc.onconnectionstatechange = () => {
+      if (pc.connectionState === 'failed' || pc.connectionState === 'closed') endSession(s, s.open ? 'failed' : 'unreachable');
+      else if (pc.connectionState === 'disconnected') setTimeout(() => { if (pc.connectionState === 'disconnected') endSession(s, 'failed'); }, 8000);
+    };
+    return pc;
+  }
+  function setupDC(s, dc) {
+    s.dc = dc; dc.binaryType = 'arraybuffer'; dc.bufferedAmountLowThreshold = CONFIG.lowWater;
+    dc.onopen = () => {
+      s.open = true; clearTimeout(s.timer); detectRoute(s);
+      const mm = s.pc && s.pc.sctp && s.pc.sctp.maxMessageSize;
+      s.chunk = Math.max(16 * 1024, Math.min(CONFIG.chunk, mm || CONFIG.chunk));
+      if (s.role === 'out') dc.send(JSON.stringify({ t: 'req', files: s.items.map((t) => ({ id: t.key, name: t.name, size: t.size, mime: t.mime, kind: t.kind || undefined })) }));
+    };
+    dc.onmessage = (e) => onMsg(s, e.data);
+    dc.onclose = () => endSession(s, 'failed');
+  }
+  // Works out whether the two devices are talking directly or through a relay, which is the biggest factor in speed.
+  async function detectRoute(s) {
+    try {
+      const stats = await s.pc.getStats();
+      const cands = new Map(); let pair = null;
+      stats.forEach((r) => {
+        if (r.type === 'local-candidate' || r.type === 'remote-candidate') cands.set(r.id, r);
+        if (r.type === 'candidate-pair' && r.state === 'succeeded' && (r.nominated || r.selected)) pair = r;
+      });
+      if (!pair) stats.forEach((r) => { if (r.type === 'transport' && r.selectedCandidatePairId) pair = stats.get(r.selectedCandidatePairId) || pair; });
+      if (!pair) return;
+      const types = [cands.get(pair.localCandidateId), cands.get(pair.remoteCandidateId)].map((c) => c && c.candidateType);
+      s.route = types.includes('relay') ? 'relay' : types.every((x) => x === 'host') ? 'direct' : 'internet';
+      for (const t of items(s)) schedule(t);
+    } catch (e) {}
+  }
+  function endSession(s, reason) {
+    if (s.ended) return;
+    s.ended = true; clearTimeout(s.timer);
+    for (const t of items(s)) {
+      if (!['sent', 'received', 'declined'].includes(t.status)) {
+        t.status = reason === 'unreachable' ? 'unreachable' : 'failed'; schedule(t);
+        if (t.store) store.discard(t);   // do not leave half-written files on the device
+      }
+    }
+    if (s.req) closeRequest(s);
+    sessions.delete(s.sid);
+    updateRing(s.remote);
+    if (!sessions.size) keepAwake(false);
+    setTimeout(() => { try { s.dc && s.dc.close(); } catch (e) {} try { s.pc && s.pc.close(); } catch (e) {} }, 400);
+  }
+
+  async function sendTo(peerId, files, opts) {
+    const p = peers.get(peerId);
+    if (!p || !files.length) return;
+    const s = { sid: rid(), role: 'out', remote: peerId, remoteName: p.name, items: [], pend: [] };
+    sessions.set(s.sid, s);
+    keepAwake(true);
+    for (const f of files) {
+      const t = { key: 'o' + rid(4), dir: 'out', name: f.name, size: f.size, mime: f.type || 'application/octet-stream', file: f, done: 0, status: 'waiting', sess: s, peer: p.name, kind: opts && opts.text ? 'text' : '' };
+      s.items.push(t); addRow(t);
+    }
+    updateRing(peerId);
+    const pc = newPC(s);
+    setupDC(s, pc.createDataChannel('ferry'));
+    s.timer = setTimeout(() => { if (!s.open) endSession(s, 'unreachable'); }, CONFIG.connectTimeout);
+    try {
+      await pc.setLocalDescription(await pc.createOffer());
+      sig(s, { t: 'offer', sdp: pc.localDescription });
+    } catch (e) { endSession(s, 'unreachable'); }
+  }
+
+  async function onSignal({ from, data }) {
+    let s = sessions.get(data.sid);
+    try {
+      if (data.t === 'offer') {
+        if (s) return;
+        const p = peers.get(from);
+        s = { sid: data.sid, role: 'in', remote: from, remoteName: p ? p.name : 'Another device', items: new Map(), pend: [] };
+        sessions.set(s.sid, s);
+        keepAwake(true);
+        const pc = newPC(s);
+        pc.ondatachannel = (e) => setupDC(s, e.channel);
+        s.timer = setTimeout(() => { if (!s.open) endSession(s, 'unreachable'); }, CONFIG.connectTimeout);
+        await pc.setRemoteDescription(data.sdp);
+        s.pend.splice(0).forEach((c) => pc.addIceCandidate(c).catch(() => {}));
+        await pc.setLocalDescription(await pc.createAnswer());
+        sig(s, { t: 'answer', sdp: pc.localDescription });
+      } else if (!s) return;
+      else if (data.t === 'answer') {
+        await s.pc.setRemoteDescription(data.sdp);
+        s.pend.splice(0).forEach((c) => s.pc.addIceCandidate(c).catch(() => {}));
+      } else if (data.t === 'ice') {
+        if (s.pc.remoteDescription) s.pc.addIceCandidate(data.c).catch(() => {}); else s.pend.push(data.c);
+      }
+    } catch (e) { if (s) endSession(s, 'unreachable'); }
+  }
+
+  /* ---- messages on the data channel ---- */
+  function onMsg(s, d) {
+    s.last = performance.now();
+    if (typeof d !== 'string') {
+      if (s.cur && s.role === 'in') receiveChunk(s, s.cur, d);
+      return;
+    }
+    let m; try { m = JSON.parse(d); } catch (e) { return; }
+    if (s.role === 'in') {
+      if (m.t === 'req') askUser(s, m.files);
+      else if (m.t === 'start') s.cur = s.items.get(m.id) || null;
+      else if (m.t === 'end') finishIn(s, m.id);
+    } else {
+      if (m.t === 'accept') { s.active = true; streamAll(s); }
+      else if (m.t === 'pause') s.paused = true;       // the receiver is still writing to disk. Wait for it.
+      else if (m.t === 'resume') s.paused = false;
+      else if (m.t === 'abort') endSession(s, 'failed');
+      else if (m.t === 'decline') { s.items.forEach((t) => { t.status = 'declined'; schedule(t); }); endSession(s, 'declined'); }
+      else if (m.t === 'ack') {
+        const t = s.items.find((x) => x.key === m.id);
+        if (t) { t.status = 'sent'; t.done = t.size; schedule(t); }
+        if (s.items.every((x) => x.status === 'sent')) setTimeout(() => endSession(s, 'done'), 300);
+      }
+    }
+  }
+
+  /* ---- sending the data ---- */
+  function waitLow(dc) {
+    return new Promise((res) => {
+      const h = () => { dc.removeEventListener('bufferedamountlow', h); res(); };
+      dc.addEventListener('bufferedamountlow', h);
+      setTimeout(h, 250);
+    });
+  }
+  async function streamAll(s) {
+    try { for (const t of s.items) await streamOne(s, t); } catch (e) { endSession(s, 'failed'); }
+  }
+  async function streamOne(s, t) {
+    const dc = s.dc, SLICE = 4 * 1024 * 1024, chunk = s.chunk || 16 * 1024;
+    t.status = 'sending'; schedule(t);
+    dc.send(JSON.stringify({ t: 'start', id: t.key }));
+    const read = (o) => o < t.size ? t.file.slice(o, Math.min(o + SLICE, t.size)).arrayBuffer() : null;
+    let off = 0, n = 0, next = read(0);
+    while (off < t.size) {
+      if (dc.readyState !== 'open') throw new Error('closed');
+      const buf = await next;
+      next = read(off + buf.byteLength);   // read the next piece from storage while this one is being sent
+      for (let p = 0; p < buf.byteLength; p += chunk) {
+        while (dc.bufferedAmount > CONFIG.highWater || s.paused) {   // s.paused is only ever set by a receiver writing a very large file to disk
+          s.last = performance.now();
+          await waitLow(dc);
+          if (dc.readyState !== 'open') throw new Error('closed');
+        }
+        dc.send(new Uint8Array(buf, p, Math.min(chunk, buf.byteLength - p)));
+        s.last = performance.now();
+        if (++n % 8 === 0) { t.done = Math.max(0, off + p + chunk - dc.bufferedAmount); schedule(t); updateRing(s.remote); }
+      }
+      off += buf.byteLength;
+      t.done = Math.max(0, off - dc.bufferedAmount);
+      schedule(t); updateRing(s.remote);
+    }
+    dc.send(JSON.stringify({ t: 'end', id: t.key }));
+    t.status = 'finishing'; schedule(t);
+  }
+
+  /* ---- storing received files on disk ---- */
+  // Incoming data is written straight to the browser's private file storage (OPFS) by a background worker, so a 2 GB video
+  // never sits in memory. Browsers without OPFS fall back to keeping chunks in memory, which is fine for smaller files.
+  function storeWorker() {
+    const files = new Map();
+    const reply = (m) => self.postMessage(m);
+    self.onmessage = async (e) => {
+      const m = e.data;
+      try {
+        if (m.op === 'open') {
+          const root = await navigator.storage.getDirectory();
+          const dir = await root.getDirectoryHandle('ferry-incoming', { create: true });
+          const fh = await dir.getFileHandle(m.file, { create: true });
+          const ah = await fh.createSyncAccessHandle();
+          ah.truncate(0);
+          files.set(m.id, { ah, pos: 0 });
+          reply({ op: 'opened', id: m.id, rid: m.rid });
+        } else if (m.op === 'write') {
+          const f = files.get(m.id);
+          if (!f) return;
+          const u8 = new Uint8Array(m.buf);
+          let off = 0;
+          while (off < u8.length) {
+            const n = f.ah.write(u8.subarray(off), { at: f.pos });
+            if (!n) throw new Error('write failed');
+            off += n; f.pos += n;
+          }
+          reply({ op: 'wrote', id: m.id, bytes: u8.length });
+        } else if (m.op === 'close') {
+          const f = files.get(m.id);
+          if (f) { f.ah.flush(); f.ah.close(); files.delete(m.id); }
+          reply({ op: 'closed', id: m.id, rid: m.rid });
+        } else if (m.op === 'discard') {
+          const f = files.get(m.id);
+          if (f) { try { f.ah.close(); } catch (x) {} files.delete(m.id); }
+        }
+      } catch (err) {
+        reply({ op: 'error', id: m.id, rid: m.rid, msg: String((err && err.name) || err) });
+      }
+    };
+  }
+  const store = (() => {
+    // createSyncAccessHandle only exists inside workers, so it cannot be tested here. If it is missing, open() fails and we fall back to memory.
+    const supported = typeof Worker === 'function' && !!(navigator.storage && navigator.storage.getDirectory);
+    let worker = null, seq = 0;
+    const pending = new Map(), byId = new Map();
+    const dirHandle = async (create) => (await navigator.storage.getDirectory()).getDirectoryHandle('ferry-incoming', { create: !!create });
+    function boot() {
+      if (worker) return worker;
+      worker = new Worker(URL.createObjectURL(new Blob(['(' + storeWorker.toString() + ')()'], { type: 'text/javascript' })));
+      worker.onmessage = (e) => {
+        const m = e.data;
+        if (m.rid && pending.has(m.rid)) {
+          const p = pending.get(m.rid); pending.delete(m.rid);
+          return m.op === 'error' ? p.rej(new Error(m.msg)) : p.res(m);
+        }
+        const t = byId.get(m.id);
+        if (!t) return;
+        if (m.op === 'wrote') onWrote(t, m.bytes);
+        else if (m.op === 'error') onWriteError(t, m.msg);
+      };
+      worker.onerror = () => {
+        pending.forEach((p) => p.rej(new Error('worker failed'))); pending.clear();
+        byId.forEach((t) => onWriteError(t, 'WorkerError')); worker = null;
+      };
+      return worker;
+    }
+    const call = (msg) => new Promise((res, rej) => { const r = ++seq; pending.set(r, { res, rej }); boot().postMessage(Object.assign({ rid: r }, msg)); });
+    return {
+      supported,
+      async open(t) {
+        t.sid = 'f' + (++seq);
+        t.disk = 'ferry-' + Date.now().toString(36) + '-' + rid(4);
+        byId.set(t.sid, t);
+        try { await call({ op: 'open', id: t.sid, file: t.disk }); } catch (e) { byId.delete(t.sid); throw e; }
+        t.store = true;
+      },
+      write(t, buf) { worker.postMessage({ op: 'write', id: t.sid, buf }, [buf]); },
+      async finish(t) {
+        await call({ op: 'close', id: t.sid });
+        byId.delete(t.sid);
+        return (await (await dirHandle(false)).getFileHandle(t.disk)).getFile();
+      },
+      discard(t) {
+        if (worker && t.sid) worker.postMessage({ op: 'discard', id: t.sid });
+        byId.delete(t.sid); t.store = false;
+        this.remove(t);
+      },
+      async remove(t) { try { if (t.disk) await (await dirHandle(false)).removeEntry(t.disk); } catch (e) {} },
+      async sweep() {   // clear leftovers from earlier visits (older than 6 hours)
+        try {
+          const dir = await dirHandle(false);
+          for await (const [name, h] of dir.entries()) {
+            try { const f = await h.getFile(); if (Date.now() - f.lastModified > 6 * 3600e3) await dir.removeEntry(name); } catch (e) {}
+          }
+        } catch (e) {}
+      }
+    };
+  })();
+  function onWrote(t, bytes) {
+    const s = t.sess; if (!s) return;
+    s.queued = Math.max(0, (s.queued || 0) - bytes);
+    if (s.pausedSent && s.queued < 4 * 1024 * 1024) { s.pausedSent = false; try { s.dc.send('{"t":"resume"}'); } catch (e) {} }
+  }
+  function onWriteError(t, msg) {
+    if (t.status !== 'receiving') return;
+    t.status = 'failed';
+    t.err = msg === 'QuotaExceededError' ? 'Not enough free space on this device' : 'Could not save the file on this device';
+    schedule(t);
+    const s = t.sess;
+    if (s) { try { s.dc.send('{"t":"abort"}'); } catch (e) {} endSession(s, 'failed'); }
+  }
+
+  /* ---- receiving ---- */
+  function receiveChunk(s, t, d) {
+    t.done += d.byteLength;
+    if (t.store) {
+      s.queued = (s.queued || 0) + d.byteLength;
+      store.write(t, d);
+      // The disk fell behind the network: ask the sender to wait instead of piling data up in memory.
+      if (s.queued > 16 * 1024 * 1024 && !s.pausedSent) { s.pausedSent = true; try { s.dc.send('{"t":"pause"}'); } catch (e) {} }
+    } else t.chunks.push(d);
+    schedule(t); updateRing(s.remote);
+  }
+  async function finishIn(s, id) {
+    const t = s.items.get(id);
+    if (!t) return;
+    s.cur = null;
+    if (t.done !== t.size) { if (t.store) store.discard(t); t.status = 'failed'; schedule(t); return; }
+    try {
+      if (t.store) {
+        t.blob = await store.finish(t);
+        if (t.blob.size !== t.size) throw new Error('short file');   // never hand over a file that was cut short while saving
+      } else { t.blob = new Blob(t.chunks, { type: t.mime }); t.chunks = []; }
+    } catch (e) { t.status = 'failed'; t.err = 'Could not save the file on this device'; schedule(t); return; }
+    if (t.kind === 'text') { try { t.text = await t.blob.text(); } catch (e) { t.kind = ''; } }
+    t.url = URL.createObjectURL(t.blob);
+    t.status = 'received';
+    schedule(t);
+    try { s.dc.send(JSON.stringify({ t: 'ack', id })); } catch (e) {}
+  }
+  const reqQueue = [];
+  let reqShowing = null;
+  function askUser(s, files) {
+    s.req = { files: files.slice(0, 200) };
+    if (settings.auto) return respond(s, true);
+    reqQueue.push(s);
+    nextRequest();
+    try { navigator.vibrate && navigator.vibrate(60); } catch (e) {}
+  }
+  function nextRequest() {
+    if (reqShowing || !reqQueue.length) return;
+    const s = reqQueue.shift();
+    if (s.ended) return nextRequest();
+    reqShowing = s;
+    const p = peers.get(s.remote) || { name: s.remoteName, type: 'computer' };
+    const files = s.req.files, total = files.reduce((a, f) => a + (+f.size || 0), 0);
+    $('#reqAv').innerHTML = iconFor(p.type);
+    const onlyText = files.every((f) => f.kind === 'text');
+    $('#reqTitle').textContent = p.name + ' wants to send you ' + (onlyText ? (files.length === 1 ? 'a text or link' : files.length + ' texts or links') : files.length === 1 ? '1 file' : files.length + ' files');
+    $('#reqSub').textContent = (LABEL[p.type] || 'Device') + ' · ' + fmtBytes(total);
+    const ul = $('#reqFiles'); ul.textContent = '';
+    files.slice(0, 3).forEach((f) => { const li = document.createElement('li'); li.textContent = f.kind === 'text' ? 'Text or link' : f.name; ul.appendChild(li); });
+    if (files.length > 3) { const li = document.createElement('li'); li.className = 'more'; li.textContent = '+ ' + (files.length - 3) + ' more'; ul.appendChild(li); }
+    $('#reqBack').hidden = false;
+    $('#reqYes').focus();
+  }
+  function closeRequest(s) {
+    const i = reqQueue.indexOf(s); if (i >= 0) reqQueue.splice(i, 1);
+    if (reqShowing === s) { reqShowing = null; $('#reqBack').hidden = true; nextRequest(); }
+  }
+  async function respond(s, ok) {
+    if (reqShowing === s) { reqShowing = null; $('#reqBack').hidden = true; }
+    if (s.ended) return nextRequest();
+    if (ok) {
+      s.queued = 0;
+      for (const f of s.req.files) {
+        const t = { key: 'i' + f.id, dir: 'in', name: String(f.name || 'file'), size: +f.size || 0, mime: f.mime || 'application/octet-stream', done: 0, status: 'receiving', chunks: [], store: false, sess: s, peer: s.remoteName, kind: f.kind === 'text' && +f.size > 0 && +f.size <= 200000 ? 'text' : '' };
+        s.items.set(f.id, t); addRow(t);
+        if (t.size === 0) { t.status = 'received'; t.blob = new Blob([], { type: t.mime }); t.url = URL.createObjectURL(t.blob); schedule(t); }
+        else if (store.supported && t.size >= CONFIG.bigFile) { try { await store.open(t); } catch (e) { t.store = false; } }   // only very large files go to disk; everything else stays in memory, as in the original
+      }
+      if (s.ended) return nextRequest();
+      s.active = true; s.last = performance.now();
+      try { s.dc.send(JSON.stringify({ t: 'accept' })); } catch (e) { endSession(s, 'failed'); }
+    } else {
+      try { s.dc.send(JSON.stringify({ t: 'decline' })); } catch (e) {}
+      endSession(s, 'declined');
+    }
+    updateRing(s.remote);
+    nextRequest();
+  }
+  $('#reqYes').addEventListener('click', () => reqShowing && respond(reqShowing, true));
+  $('#reqNo').addEventListener('click', () => reqShowing && respond(reqShowing, false));
+
+  /* ---- activity list ---- */
+  const rows = new Map();
+  const ext = (n) => { const m = /\.([A-Za-z0-9]{1,4})$/.exec(n); return m ? m[1].toUpperCase() : 'FILE'; };
+  function addRow(t) {
+    const li = document.createElement('li'); li.className = 'item ' + t.dir;
+    const tile = document.createElement('div'); tile.className = 'tile';
+    if (t.dir === 'out' && t.mime.startsWith('image/') && t.size < 40e6) {
+      const img = document.createElement('img'); img.alt = ''; img.src = URL.createObjectURL(t.file); img.onload = () => URL.revokeObjectURL(img.src); tile.appendChild(img);
+    } else tile.textContent = t.kind === 'text' ? 'TXT' : ext(t.name);
+    const meta = document.createElement('div'); meta.className = 'meta';
+    const name = document.createElement('p'); name.className = 'name'; name.textContent = t.name; name.title = t.name;
+    if (t.kind === 'text') { li.classList.add('txt'); if (t.dir === 'out') { name.textContent = 'Text or link'; name.title = ''; } }
+    const sub = document.createElement('p'); sub.className = 'sub';
+    const bar = document.createElement('div'); bar.className = 'bar';
+    const fill = document.createElement('i'); bar.appendChild(fill);
+    meta.append(name, sub, bar);
+    const act = document.createElement('div'); act.className = 'act';
+    li.append(tile, meta, act);
+    $('#list').prepend(li);
+    $('#activity').hidden = false;
+    rows.set(t.key, { t, li, tile, sub, bar, fill, act, last: { time: performance.now(), bytes: 0, speed: 0 }, actDone: false });
+    schedule(t);
+  }
+  const dirty = new Set();
+  function schedule(t) {
+    if (dirty.has(t)) return;
+    dirty.add(t);
+    requestAnimationFrame(() => { dirty.delete(t); paint(t); });
+  }
+  function paint(t) {
+    const r = rows.get(t.key); if (!r) return;
+    const active = t.status === 'sending' || t.status === 'receiving';
+    const pct = t.size ? Math.min(100, Math.round((t.done / t.size) * 100)) : 100;
+    r.fill.style.width = (t.status === 'waiting' ? 0 : pct) + '%';
+    r.bar.classList.toggle('done', ['sent', 'received', 'failed', 'declined', 'unreachable'].includes(t.status));
+    const now = performance.now();
+    if (active && now - r.last.time > 500) {
+      const inst = (t.done - r.last.bytes) / ((now - r.last.time) / 1000);
+      r.last.speed = r.last.speed > 0 ? r.last.speed * 0.6 + inst * 0.4 : inst;   // smoothed, so the number does not jump around
+      r.last.time = now; r.last.bytes = t.done;
+    }
+    const route = t.sess && t.sess.route ? ' (' + t.sess.route + ')' : '';
+    const left = r.last.speed > 0 ? Math.round((t.size - t.done) / r.last.speed) : 0;
+    const eta = left > 0 && t.size - t.done > 5e6 ? ' · ' + (left < 60 ? 'under a minute' : left < 3600 ? Math.round(left / 60) + ' min' : Math.floor(left / 3600) + ' h ' + Math.round((left % 3600) / 60) + ' min') + ' left' : '';
+    const spd = r.last.speed > 0 ? ' · ' + fmtBytes(r.last.speed) + '/s' + route + eta : '';
+    const size = fmtBytes(t.size);
+    const text = {
+      waiting: 'Waiting for ' + t.peer + ' to accept',
+      sending: 'Sending to ' + t.peer + ' · ' + pct + '%' + spd,
+      finishing: 'Finishing · ' + size,
+      sent: t.kind === 'text' ? 'Sent to ' + t.peer : 'Sent to ' + t.peer + ' · ' + size,
+      declined: t.peer + ' declined',
+      unreachable: 'Could not reach ' + t.peer + '. Both devices need to be on the same Wi-Fi.',
+      receiving: 'Receiving from ' + t.peer + ' · ' + pct + '%' + spd,
+      received: t.kind === 'text' ? 'From ' + t.peer : 'From ' + t.peer + ' · ' + size,
+      failed: (t.err || 'Did not finish') + ' · ' + size
+    }[t.status];
+    r.sub.textContent = text;
+    r.sub.classList.toggle('err', ['failed', 'unreachable', 'declined'].includes(t.status));
+    r.sub.title = text;
+    if (t.status === 'received' && !r.actDone) { r.actDone = true; buildActions(r); }
+  }
+  function buildActions(r) {
+    const t = r.t;
+    if (t.kind === 'text' && t.text != null) {
+      r.li.querySelector('.name').textContent = t.text; r.li.querySelector('.name').title = t.text;
+      const cp = document.createElement('button'); cp.type = 'button'; cp.className = 'btn sm'; cp.textContent = 'Copy';
+      cp.addEventListener('click', async () => {
+        try { await navigator.clipboard.writeText(t.text); toast('Copied'); }
+        catch (e) { const ta = document.createElement('textarea'); ta.value = t.text; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); toast('Copied'); } catch (x) {} ta.remove(); }
+      });
+      r.act.appendChild(cp);
+      const one = t.text.trim();
+      if (/^https?:\/\/[^\s]+$/i.test(one)) {   // only plain web addresses get an Open button, and it shows the address first
+        const op = document.createElement('a'); op.className = 'btn sm soft'; op.textContent = 'Open link'; op.href = one; op.target = '_blank'; op.rel = 'noopener noreferrer';
+        r.act.appendChild(op);
+      }
+      return;
+    }
+    const save = document.createElement('button'); save.type = 'button'; save.className = 'btn sm'; save.textContent = 'Save';
+    save.addEventListener('click', () => { const a = document.createElement('a'); a.href = t.url; a.download = t.name; document.body.appendChild(a); a.click(); a.remove(); });
+    r.act.appendChild(save);
+    let file = null;
+    try { file = new File([t.blob], t.name, { type: t.mime }); } catch (e) {}
+    if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+      const sh = document.createElement('button'); sh.type = 'button'; sh.className = 'btn sm soft'; sh.textContent = 'Share';
+      sh.addEventListener('click', () => navigator.share({ files: [file] }).catch(() => {}));
+      r.act.appendChild(sh);
+    }
+    if (t.mime.startsWith('image/') && t.size < 40e6) {
+      r.tile.textContent = '';
+      const img = document.createElement('img'); img.alt = ''; img.src = t.url; r.tile.appendChild(img);
+    }
+  }
+  $('#clearBtn').addEventListener('click', () => {
+    for (const [k, r] of rows) {
+      if (['waiting', 'sending', 'receiving', 'finishing'].includes(r.t.status)) continue;
+      if (r.t.url) URL.revokeObjectURL(r.t.url);
+      if (r.t.disk) store.remove(r.t);   // free the space used by a received file
+      r.li.remove(); rows.delete(k);
+    }
+    $('#activity').hidden = rows.size === 0;
+  });
+
+  /* ---- settings sheet ---- */
+  const setBack = $('#setBack');
+  function openSettings(focusRoom) {
+    $('#setName').value = settings.name;
+    $('#setAuto').checked = settings.auto;
+    $('#setRoom').value = settings.room;
+    syncSettingsUI();
+    setBack.hidden = false;
+    if (focusRoom) $('#setRoom').focus();
+  }
+  function syncSettingsUI() {
+    document.querySelectorAll('#themeSeg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === settings.theme)));
+    document.querySelectorAll('#swatches .sw').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.c.toLowerCase() === settings.accent.toLowerCase())));
+  }
+  function buildSwatches() {
+    const box = $('#swatches');
+    CONFIG.accents.forEach((c) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'sw'; b.dataset.c = c; b.style.setProperty('--c', c); b.setAttribute('aria-label', 'Accent ' + c);
+      b.addEventListener('click', () => { settings.accent = c; save(); applyTheme(); syncSettingsUI(); });
+      box.appendChild(b);
+    });
+    const pk = document.createElement('label'); pk.className = 'picker'; pk.title = 'Custom colour';
+    pk.innerHTML = '<span>+</span><input type="color" id="customColor" aria-label="Custom accent colour">';
+    box.appendChild(pk);
+    pk.querySelector('input').addEventListener('input', (e) => { settings.accent = e.target.value; save(); applyTheme(); syncSettingsUI(); });
+  }
+  buildSwatches();
+  document.querySelectorAll('#themeSeg button').forEach((b) => b.addEventListener('click', () => { settings.theme = b.dataset.v; save(); applyTheme(); syncSettingsUI(); }));
+  $('#setAuto').addEventListener('change', (e) => { settings.auto = e.target.checked; save(); });
+  function commitName() {
+    const v = $('#setName').value.trim().slice(0, 24);
+    if (!v || v === settings.name) { $('#setName').value = settings.name; return; }
+    settings.name = v; save(); paintMe();
+    if (mode === 'mqtt') { announce(); sendRegister(); }
+    else if (me.id) fetch('/rename', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: me.id, name: v }) }).catch(() => {});
+  }
+  $('#setName').addEventListener('change', commitName);
+  $('#setName').addEventListener('keydown', (e) => { if (e.key === 'Enter') e.target.blur(); });
+  function commitRoom() {
+    const v = $('#setRoom').value.trim().slice(0, 32);
+    if (v === settings.room) return;
+    settings.room = v; save(); connectEvents();
+  }
+  $('#setRoom').addEventListener('change', commitRoom);
+  $('#mkRoom').addEventListener('click', async () => {
+    const A = 'abcdefghjkmnpqrstuvwxyz23456789';   // no look-alike letters
+    const code = Array.from(crypto.getRandomValues(new Uint8Array(6)), (b) => A[b % A.length]).join('');
+    $('#setRoom').value = code; commitRoom();
+    const link = location.origin + '/?room=' + code;
+    try { if (navigator.share) { await navigator.share({ title: 'Ferry', text: 'Join my private Ferry room:', url: link }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
+    try { await navigator.clipboard.writeText(link); toast('Room link copied'); } catch (e) { toast(link); }
+  });
+  function closeSettings() { commitName(); commitRoom(); setBack.hidden = true; }
+  $('#shareApp').addEventListener('click', async () => {
+    const data = { title: 'Ferry', text: 'Send files between iPhone and Android. Open this link, then add it to your Home Screen:', url: location.origin };
+    try { if (navigator.share) { await navigator.share(data); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
+    try { await navigator.clipboard.writeText(location.origin); toast('Link copied'); } catch (e) { toast(location.origin); }
+  });
+  $('#setDone').addEventListener('click', closeSettings);
+  setBack.addEventListener('click', (e) => { if (e.target === setBack) closeSettings(); });
+  $('#openSettings').addEventListener('click', () => openSettings(false));
+  $('#meAv').addEventListener('click', () => openSettings(false));
+  $('#notShowing').addEventListener('click', () => openSettings(true));
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !setBack.hidden) closeSettings(); });
+
+  /* ---- install popup and first-run name ---- */
+  const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  const instBack = $('#instBack'), nameBack = $('#nameBack'), nameIn = $('#nameInput');
+  let installEvent = null, apkUrl = '';
+  // Phone model, when the browser offers it (Chrome on Android does).
+  let hi = {};
+  const hiReady = navigator.userAgentData && navigator.userAgentData.getHighEntropyValues
+    ? navigator.userAgentData.getHighEntropyValues(['model']).then((v) => { hi = v || {}; }).catch(() => {})
+    : Promise.resolve();
+  let instTab = me.type === 'iphone' || me.type === 'ipad' ? 'iphone' : 'android';
+
+  window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvent = e; syncInstall(); });
+  window.addEventListener('appinstalled', () => { installEvent = null; toast('Ferry is installed. Open it from your home screen.'); closeInstall(); });
+  // A real Android app file shows up here once ferry.apk is added next to index.html.
+  fetch('/ferry.apk', { method: 'HEAD' }).then((r) => { if (r.ok) { apkUrl = '/ferry.apk'; syncInstall(); } }).catch(() => {});
+
+  function syncInstall() {
+    document.querySelectorAll('#instSeg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === instTab)));
+    $('#instAndroid').hidden = instTab !== 'android';
+    $('#instIphone').hidden = instTab !== 'iphone';
+    $('#instBtn').hidden = !installEvent;
+    $('#apkBtn').hidden = !apkUrl;
+    $('#instManual').hidden = !!installEvent;
+    $('#instClose').className = 'btn' + (instTab === 'android' && (installEvent || apkUrl) ? ' ghost' : '');
+    $('#instClose').textContent = settings.named ? 'Close' : 'Continue in browser';
+  }
+  function openInstall() { syncInstall(); instBack.hidden = false; }
+  function closeInstall() { instBack.hidden = true; if (!settings.named) askName(); }
+  document.querySelectorAll('#instSeg button').forEach((b) => b.addEventListener('click', () => { instTab = b.dataset.v; syncInstall(); }));
+  $('#instBtn').addEventListener('click', async () => {
+    if (!installEvent) return;
+    const ev = installEvent; installEvent = null; syncInstall();
+    try { ev.prompt(); await ev.userChoice; } catch (e) {}
+  });
+  $('#instShare').addEventListener('click', () => $('#shareApp').click());
+  $('#instClose').addEventListener('click', closeInstall);
+  instBack.addEventListener('click', (e) => { if (e.target === instBack) closeInstall(); });
+  $('#getApp').hidden = isStandalone();
+  $('#getApp').addEventListener('click', openInstall);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !instBack.hidden) closeInstall(); });
+
+  function askName() {
+    nameIn.value = settings.name;
+    $('#nameGo').disabled = !nameIn.value.trim();
+    $('#nameTitle').textContent = settings.named ? 'Confirm this device name' : 'What should we call this device?';
+    $('#netText').textContent = 'Waiting for a device name…';
+    nameBack.hidden = false;
+    setTimeout(() => { nameIn.focus(); nameIn.select(); }, 60);
+  }
+  function finishName() {
+    const v = nameIn.value.trim().slice(0, 24);
+    if (!v) return;
+    settings.name = v; settings.named = true; settings.ack = 2; save(); paintMe();   // 2 = has seen the current notice
+    nameBack.hidden = true;
+    connectEvents();
+    toast('Welcome, ' + v);
+  }
+  nameIn.addEventListener('input', () => { $('#nameGo').disabled = !nameIn.value.trim(); });
+  nameIn.addEventListener('keydown', (e) => { if (e.key === 'Enter') finishName(); });
+  $('#nameGo').addEventListener('click', finishName);
+
+  /* ---- start ---- */
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  }
+  // The server decides which ICE (STUN/TURN) servers to use, so a TURN server can be added without editing this file.
+  if (store.supported) store.sweep();
+  // A transfer that stops moving data is failed after a while, instead of hanging on screen forever.
+  setInterval(() => {
+    const now = performance.now();
+    for (const s of [...sessions.values()]) if (s.active && !s.ended && now - (s.last || now) > CONFIG.stallTimeout) endSession(s, 'failed');
+  }, 5000);
+  window.addEventListener('beforeunload', (e) => { if ([...sessions.values()].some((s) => s.active && !s.ended)) { e.preventDefault(); e.returnValue = ''; } });
+  Promise.race([hiReady, new Promise((r) => setTimeout(r, 400))]).then(() => {
+    if (typeof RTCPeerConnection !== 'function') { setStatus('offline'); $('#netText').textContent = 'This browser cannot send files directly. Try a newer browser.'; }
+    else if (settings.named && settings.ack === 2) connectEvents();
+    else if (settings.named || isStandalone() || me.type === 'computer') askName();   // new device, or the notice changed: ask first
+    else openInstall();                                                               // browser tab: offer the install first
+  });
+})();
+</script>
+</body>
+</html>
